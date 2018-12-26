@@ -11,8 +11,11 @@ TODO
 '''
 
 
-def histpair(x, y=None, bins=None, binsize=None, xmin=None, xmax=None, ymax=None,
-             normed=1, alpha=0.2, figsize=(12, 8), title=None, ax=None):
+def histpair(x, y=None,
+             bins=None, binsize=None,
+             xmin=None, xmax=None, ymax=None,
+             normed=1, alpha=0.2, figsize=(12, 8), title=None,
+             ax=None):
     '''
     INPUT:
     x:      numpy array; point of a distribution
@@ -53,3 +56,30 @@ def histpair(x, y=None, bins=None, binsize=None, xmin=None, xmax=None, ymax=None
     if ymax is not None:
         ax.set_ylim(0, ymax)
     ax.legend()
+
+
+def axdline(ax, slope, intercept, **kwargs):
+    """
+    Add a diagonal line across the axis, similar to axhline and axvline.
+    Parameters
+    ----------
+    slope : scalar
+        slope in data coordinates of the diagonal line
+
+    intercept : scalar
+        y intercept in data coordinates of the diagonal line
+
+    Returns
+    -------
+    line : :class:`~matplotlib.lines.Line2D`
+    """
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    line = ax.plot(xlim,
+                   (xlim[0]*slope + intercept,
+                    xlim[1]*slope + intercept),
+                   **kwargs)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    return line[0]
