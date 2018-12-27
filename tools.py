@@ -6,14 +6,13 @@ import matplotlib.pyplot as plt
 '''
 TODO
   xlim instead of xmin/xmax?
-  kde
   set colors
-  call as list of arrays
+  should line up better with integers by default
 '''
 
 def multihist(x, y=None,
               bins=None, binsize=None,
-              xmin=None, xmax=None, top=None,
+              xmin=None, xmax=None, ymax=None,
               kde=None,
               density=True, alpha=0.2, figsize=(12, 8), title=None,
               ax=None):
@@ -29,7 +28,7 @@ def multihist(x, y=None,
  
     xmin:   lower limit (or None to set to min of data)
     xmax:   upper limit (or None to set to max of data)
-    top:    upper limit of y
+    ymax:    upper limit of y
 
     density: normalize number of elements in each class
     kde:    add kde plot
@@ -50,14 +49,23 @@ def multihist(x, y=None,
     else:
         xc = np.clip(x, a_min=xmin, a_max=xmax)
 
-    if binsize is None:
-        if bins is None:
-            bins = 20.
-        # maybe there should be logic around trying to make these integers
-        binsize = (xc.max() - xc.min())/(bins+1)
-    binarray = np.arange(xc.min(),
-                         xc.max() + binsize,
-                         binsize)
+    xbinmin, xbinmax = xc.min(), xc.max()
+    if xmin is not None:
+        xbinmin = min(xbinmin, xmin)
+    if xmax is not None:
+        xbinmax = max(xbinmax, xmax)
+    
+    if binsize == None:
+        if bins == None:
+            bins = 20
+        binsize = (xc.max() - xc.min())/bins
+        binarray = np.linspace(xbinmin, xbinmax, bins + 1)
+    else:
+        binarray = np.arange(xbinmin, np.nextafter(xbinmax, xbinmax+1), binsize)
+
+    if kde:
+        xvals = np.linspace(xc.min(), xc.max(), 100)
+        kde_scale = 1    
 
     # We need to get the default color cycle to get the same color
     # for the hist and kde line.
@@ -78,8 +86,8 @@ def multihist(x, y=None,
                 kde_scale = np.sum(y == yval) * binsize
             ax.plot(xvals, kde_scale * kde_func(xvals), color=color)
         
-    ax.set_xlim(xmin=xmin, xmax=xmax)
-    ax.set_ylim(top=top)
+    ax.set_xlim(left=xmin, right=xmax)
+    ax.set_ylim(top=ymax)
     ax.legend()
 
 
