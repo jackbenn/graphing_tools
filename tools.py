@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
+import matplotlib
 from sklearn.metrics import confusion_matrix
 
 '''
@@ -122,8 +123,10 @@ def axdline(ax, slope, intercept, **kwargs):
 def plot_confusion_matrix(ax,
                           y_true,
                           y_pred,
+                          color='blue',
                           grid=False,
                           area=True,
+                          transpose=True,
                           normalization="maximum"):
     """
     Parameters
@@ -138,24 +141,30 @@ def plot_confusion_matrix(ax,
     area : bool, default: True
         if True, the area of the square is proportional to the value. If False, the length
         of a side is used.
+    transpose : bool, default: True
+        transpose from sklearn standard. if True, show the actual values along the vertical axis
+        and predictions along horizontal
     nornalization : string, default: 'maximum'
         How to normalize the values.
         'maximum' : normalize all values so the largest value is 1.
-        'prediction' or 'precision' : normalize by columns so that the sum of each prediction is 1,
-            so the values represent the precisions
-        'true' or 'recall': normalize by rows so that the sum of each true value is 1,
-            so the values represent the recalls
+        'prediction' or 'precision' : normalize so that the sum of each prediction is 1,
+            so the values represent the precisions (along columns if transpose==True)
+        'true' or 'recall': normalize so that the sum of each true value is 1,
+            so the values represent the recalls (along rows if transpose==True)
     """
-    cm = confusion_matrix(y_true, y_pred).astype(float).transpose()
+    cm = confusion_matrix(y_true, y_pred).astype(float)
     if normalization == 'maximum':
         cm /= cm.max()
     elif normalization == 'prediction' or normalization == 'precision':
-        cm /= cm.sum(axis=1, keepdims=True)
-    elif normalization == 'true' or normalization == 'recall':
         cm /= cm.sum(axis=0, keepdims=True)
+    elif normalization == 'true' or normalization == 'recall':
+        cm /= cm.sum(axis=1, keepdims=True)
     else:
-        raise ValueError("`normalization` should be one of `all`, `true`, or `predictions`")
+        raise ValueError("`normalization` should be one of `maximum`, `true`, or `prediction`")
     n = cm.shape[0]
+
+    if transpose:
+        cm = cm.transpose()
     
     labels = np.unique(y_true)
     tics = np.arange(n+1)
@@ -170,13 +179,16 @@ def plot_confusion_matrix(ax,
     ax.invert_yaxis()
     ax.grid(grid, which='minor')
     
-    ax.set_xlabel('prediction')
-    ax.set_ylabel('true')
+    labels = ['true', 'precision']
+    if transpose:
+        labels.reverse()
+    ax.set_xlabel(labels[0])
+    ax.set_ylabel(labels[1])
 
     if area:
         cm **= 0.5
     for i in range(n):
         for j in range(n):
             size = cm[i, j]
-            square = matplotlib.patches.Rectangle((i - size/2, j - size/2), size, size)
+            square = matplotlib.patches.Rectangle((i - size/2, j - size/2), size, size, color=color)
             ax.add_patch(square)
