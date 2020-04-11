@@ -131,6 +131,7 @@ def plot_confusion_matrix(ax,
                           grid=False,
                           area=True,
                           transpose=True,
+                          shape='square',
                           normalization="maximum"):
     """
     Parameters
@@ -149,6 +150,8 @@ def plot_confusion_matrix(ax,
     area : bool, default: True
         if True, the area of the square is proportional to the value.
         If False, the length of a side is used.
+    shape : 'square' or 'circle'
+        the shape of the object in the grid
     transpose : bool, default: True
         transpose from sklearn standard. if True, show the actual values
         along the vertical axis and predictions along horizontal
@@ -190,7 +193,7 @@ def plot_confusion_matrix(ax,
     ax.invert_yaxis()
     ax.grid(grid, which='minor')
 
-    labels = ['true', 'precision']
+    labels = ['true', 'prediction']
     if transpose:
         labels.reverse()
     ax.set_xlabel(labels[0])
@@ -202,8 +205,11 @@ def plot_confusion_matrix(ax,
     for i in range(n):
         for j in range(n):
             size = cm[i, j]
-            square = matplotlib.patches.Rectangle((i - size/2, j - size/2),
-                                                  size, size, color=color)
+            if shape == 'square':
+                square = matplotlib.patches.Rectangle((i - size/2, j - size/2),
+                                                      size, size, color=color)
+            elif shape == 'circle':
+                square = matplotlib.patches.Circle((i, j), size/2, color=color)
             ax.add_patch(square)
             if counts:
                 ax.text(i, j, str(int(cnts[i, j])),
