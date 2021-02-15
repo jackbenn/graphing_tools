@@ -13,6 +13,31 @@ TODO
 '''
 
 
+def _find_aligned_bins(xmin, xmax, bins):
+    diff = xmax - xmin
+    target_binsize = diff / bins
+
+    log_target_binsize = np.log10(target_binsize)
+    base_unit = 10 ** np.floor(log_target_binsize)
+    trial_units = [base_unit,
+                   base_unit * 2,
+                   base_unit * 5,
+                   base_unit * 10]
+    errors = []
+    for trial_unit in trial_units:
+        trial_min_per_unit = xmin // trial_unit  # round down to trial_unit
+        trial_max_per_unit = xmax // trial_unit + (xmax % trial_unit != 0)  # round up
+        trial_bins = trial_max_per_unit - trial_min_per_unit
+        errors.append(np.log(bins / trial_bins) ** 2)  # how far of we are in number of bins
+
+    unit = trial_units[np.argmin(errors)]
+    print(f'unit={unit}')
+    print(xmax // unit + (xmax % unit != 0))
+    return np.arange(xmin // unit,
+                     xmax // unit + (xmax % unit != 0) + 1,
+                     1) * unit
+
+
 def multihist(x, y=None,
               bins=None, binsize=None,
               xmin=None, xmax=None, ymax=None,
