@@ -185,7 +185,7 @@ def plot_confusion_matrix(ax,
     transpose : bool, default: True
         transpose from sklearn standard. if True, show the actual values
         along the vertical axis and predictions along horizontal
-    nornalization : string, default: 'maximum'
+    normalization : string, default: 'maximum'
         How to normalize the values.
         'maximum' : normalize all values so the largest value is 1.
         'prediction' or 'precision' : normalize so that the sum of each
@@ -211,7 +211,7 @@ def plot_confusion_matrix(ax,
         cm = cm.transpose()
 
     labels = np.unique(y_true)
-    tics = np.arange(n+1)
+    tics = np.arange(n)
     for axis in [ax.xaxis, ax.yaxis]:
         axis.set_ticks(tics + 0.5, minor=True)
         axis.set(ticks=tics, ticklabels=labels)
