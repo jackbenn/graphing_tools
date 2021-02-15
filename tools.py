@@ -31,15 +31,14 @@ def _find_aligned_bins(xmin, xmax, bins):
         errors.append(np.log(bins / trial_bins) ** 2)  # how far of we are in number of bins
 
     unit = trial_units[np.argmin(errors)]
-    print(f'unit={unit}')
-    print(xmax // unit + (xmax % unit != 0))
-    return np.arange(xmin // unit,
-                     xmax // unit + (xmax % unit != 0) + 1,
-                     1) * unit
+    return unit, np.arange(xmin // unit,
+                           xmax // unit + (xmax % unit != 0) + 1,
+                           1) * unit
 
 
 def multihist(x, y=None,
               bins=None, binsize=None,
+              align=False,
               xmin=None, xmax=None, ymax=None,
               kde=None,
               density=True, alpha=0.2, figsize=(12, 8), title=None,
@@ -52,7 +51,8 @@ def multihist(x, y=None,
             If None (the default), x should be a list of arrays;
             a histogram with be created for each, labeled sequentially.
     bins:   int; number of bins in histogram
-    binsize:float: size of bins (overrides bins)
+    align:  align bins on multiples of integers
+    binsize:float: size of bins (overrides bins, align)
 
     xmin:   lower limit (or None to set to min of data)
     xmax:   upper limit (or None to set to max of data)
@@ -86,8 +86,13 @@ def multihist(x, y=None,
     if binsize is None:
         if bins is None:
             bins = 20
-        binsize = (xc.max() - xc.min())/bins
-        binarray = np.linspace(xbinmin, xbinmax, bins + 1)
+        if align:
+            binsize, binarray = _find_aligned_bins(xbinmin,
+                                                   xbinmax,
+                                                   bins)
+        else:
+            binsize = (xc.max() - xc.min())/bins
+            binarray = np.linspace(xbinmin, xbinmax, bins + 1)
     else:
         binarray = np.arange(xbinmin,
                              np.nextafter(xbinmax, xbinmax+1),
