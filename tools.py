@@ -245,3 +245,33 @@ def plot_confusion_matrix(ax,
                 ax.text(i, j, str(int(cnts[i, j])),
                         horizontalalignment='center',
                         verticalalignment='center', color='white')
+
+
+def plot_discrete_cdf(ax, pmf, margin=1/5):
+    """
+    Plot the CDF of discrete random variable.
+    """
+    keys = sorted(pmf)
+    diff = keys[-1] - keys[0]
+    keys.insert(0, keys[0] - diff * margin)
+    keys.append(keys[-1] + diff * margin)
+
+    cumulative_prob = 0
+    for i in range(len(keys)-1):
+        if i > 0:
+            ax.scatter([keys[i]],
+                       [cumulative_prob],
+                       s=100,
+                       facecolor='w',
+                       edgecolor='k',
+                       zorder=3)
+            cumulative_prob += pmf[keys[i]]
+            ax.scatter([keys[i]],
+                       [cumulative_prob],
+                       s=100,
+                       facecolor='k',
+                       edgecolor='k',
+                       zorder=3)
+        ax.plot([keys[i], keys[i+1]],
+                [cumulative_prob, cumulative_prob], 'k')
+        ax.set_ylabel('CDF')
