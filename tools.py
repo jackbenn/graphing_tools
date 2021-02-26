@@ -247,9 +247,16 @@ def plot_confusion_matrix(ax,
                         verticalalignment='center', color='white')
 
 
-def plot_discrete_cdf(ax, pmf, margin=1/5):
+def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     """
     Plot the CDF of discrete random variable.
+    TODO:
+      get color automatically
+      get background color rather than use white
+      add other parameters for drawing (lw, size, alpha)
+      add xlim parameter
+      allow changing xlim after calling (how?)
+      take scipy distribution as a parameter
     """
     keys = sorted(pmf)
     diff = keys[-1] - keys[0]
@@ -263,15 +270,15 @@ def plot_discrete_cdf(ax, pmf, margin=1/5):
                        [cumulative_prob],
                        s=100,
                        facecolor='w',
-                       edgecolor='k',
+                       edgecolor=color,
                        zorder=3)
             cumulative_prob += pmf[keys[i]]
             ax.scatter([keys[i]],
                        [cumulative_prob],
                        s=100,
-                       facecolor='k',
-                       edgecolor='k',
+                       facecolor=color,
+                       edgecolor=color,
                        zorder=3)
         ax.plot([keys[i], keys[i+1]],
-                [cumulative_prob, cumulative_prob], 'k')
-        ax.set_ylabel('CDF')
+                [cumulative_prob, cumulative_prob], color)
+    ax.set_ylabel('CDF')
