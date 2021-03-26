@@ -4,6 +4,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import matplotlib
 from sklearn.metrics import confusion_matrix
+from sklearn.decomposition import PCA
 
 '''
 TODO
@@ -282,3 +283,29 @@ def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
         ax.plot([keys[i], keys[i+1]],
                 [cumulative_prob, cumulative_prob], color)
     ax.set_ylabel('CDF')
+
+
+def pca_scatter_matrix(X, n_components=3, color=None, alpha=1.0):
+    if color is None:
+        color = np.zeros(len(X))
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X)
+
+    new_X = pca.transform(X)
+    fig, axs = plt.subplots(n_components-1,
+                            n_components-1,
+                            sharex=True,
+                            sharey=True,
+                            figsize=(15, 6))
+
+    for i, row in enumerate(axs, start=1):
+        for j, ax in enumerate(row):
+            ax.set_aspect('equal')
+            if j < i:
+                ax.scatter(new_X[:, j],
+                           new_X[:, i],
+                           c=color,
+                           alpha=alpha)
+            else:
+                ax.axis(False)
