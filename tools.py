@@ -285,27 +285,44 @@ def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     ax.set_ylabel('CDF')
 
 
-def pca_scatter_matrix(X, n_components=3, color=None, alpha=1.0):
+def pca_scatter_matrix(X,
+                       n_components=3,
+                       color=None,
+                       alpha=1.0,
+                       s=10,
+                       figsize=(10, 5)):
     if color is None:
         color = np.zeros(len(X))
 
     pca = PCA(n_components=n_components)
     pca.fit(X)
-
     new_X = pca.transform(X)
-    fig, axs = plt.subplots(n_components-1,
-                            n_components-1,
-                            sharex=True,
-                            sharey=True,
-                            figsize=(15, 6))
 
-    for i, row in enumerate(axs, start=1):
-        for j, ax in enumerate(row):
-            ax.set_aspect('equal')
+    diffs = new_X.min(axis=0) - new_X.max(axis=0)
+
+    fig = plt.figure(figsize=figsize)
+    gs = matplotlib.gridspec.GridSpec(nrows=n_components-1,
+                                      ncols=n_components-1,
+                                      width_ratios=diffs[:-1],
+                                      height_ratios=diffs[1:])
+
+    for i in range(1, n_components):
+        for j in range(0, n_components-1):
+            ax = plt.subplot(gs[i-1, j])
+            ax.set_aspect(1)
             if j < i:
                 ax.scatter(new_X[:, j],
                            new_X[:, i],
                            c=color,
-                           alpha=alpha)
+                           alpha=alpha,
+                           s=s)
             else:
                 ax.axis(False)
+            ax.get_xaxis().set_ticks([])
+            ax.get_yaxis().set_ticks([])
+
+            if i==n_components-1:
+                ax.set_xlabel(f'pc {j}')
+            if j==0:
+                ax.set_ylabel(f'pc {i}')
+    #fig.tight_layout()
