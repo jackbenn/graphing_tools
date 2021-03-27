@@ -325,4 +325,4 @@ def pca_scatter_matrix(X,
                 ax.set_xlabel(f'pc {j}')
             if j==0:
                 ax.set_ylabel(f'pc {i}')
-    #fig.tight_layout()
+    return fig
