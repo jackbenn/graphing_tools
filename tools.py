@@ -285,6 +285,32 @@ def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     ax.set_ylabel('CDF')
 
 
+def pp_plot(ax, data1, data2, s=20, alpha=0.3):
+    combined = np.sort(np.concatenate([data1, data2]))[:, None]
+
+    ax.plot([0, 1], [0, 1], 'k-', lw=0.5)
+    # would be better if it split the difference between < and <=
+    ax.scatter((data1 < combined).mean(axis=1),
+               (data2 < combined).mean(axis=1),
+               s=s, alpha=alpha)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title('P-P Plot')
+
+
+def qq_plot(ax, data1, data2, s=20, alpha=0.3):
+    data1 = np.sort(data1)
+    data2 = np.sort(data2)
+    q1 = np.linspace(0, 1, len(data1))
+    q2 = np.linspace(0, 1, len(data2))
+    q_combined = np.sort(np.concatenate([q1, q2]))[:, None]
+    qi1 = (q1 < q_combined).sum(axis=1)
+    qi2 = (q2 < q_combined).sum(axis=1)
+
+    ax.scatter(data1[qi1], data2[qi2], s=s, alpha=alpha)
+    ax.set_title('Q-Q Plot')
+
+
 def pca_scatter_matrix(X,
                        n_components=3,
                        color=None,
