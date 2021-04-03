@@ -291,9 +291,30 @@ def _add_prob_labels(ax, quantity1, quantity2, label1, label2):
     if label2 is not None:
         ax.set_ylabel(f'{quantity2} of {label2}')
 
+def _convert_dists_to_data(data1, data2):
+    if hasattr(data1, 'ppf') and hasattr(data2, 'ppf'):
+        q = np.linspace(0, 1, 500)
+        data1 = data1.ppf(q)
+        data2 = data2.ppf(q)
+    elif hasattr(data1, 'ppf'):
+        q = np.linspace(0, 1, len(data2))
+        data1 = data1.ppf(q)
+        data2 = np.sort(data2)
+    elif hasattr(data2, 'ppf'):
+        q = np.linspace(0, 1, len(data1))
+        data1 = np.sort(data1)
+        data2 = data2.ppf(q)
+    else:
+        data1 = np.sort(data1)
+        data2 = np.sort(data2)
+    return data1, data2
+
 def pp_plot(ax, data1, data2,
             s=20, alpha=0.3,
             label1=None, label2=None):
+    
+    data1, data2 = _convert_dists_to_data(data1, data2)
+
     combined = np.sort(np.concatenate([data1, data2]))[:, None]
 
     ax.plot([0, 1], [0, 1], 'k-', lw=0.5)
@@ -310,10 +331,12 @@ def pp_plot(ax, data1, data2,
 def qq_plot(ax, data1, data2,
             s=20, alpha=0.3,
             label1=None, label2=None):
-    data1 = np.sort(data1)
-    data2 = np.sort(data2)
+
+    data1, data2 = _convert_dists_to_data(data1, data2)
+
     q1 = np.linspace(0, 1, len(data1))
     q2 = np.linspace(0, 1, len(data2))
+
     q_combined = np.sort(np.concatenate([q1, q2]))[:, None]
     qi1 = (q1 < q_combined).sum(axis=1)
     qi2 = (q2 < q_combined).sum(axis=1)
