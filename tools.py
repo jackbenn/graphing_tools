@@ -285,7 +285,15 @@ def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     ax.set_ylabel('CDF')
 
 
-def pp_plot(ax, data1, data2, s=20, alpha=0.3):
+def _add_prob_labels(ax, quantity1, quantity2, label1, label2):
+    if label1 is not None:
+        ax.set_xlabel(f'{quantity1} of {label1}')
+    if label2 is not None:
+        ax.set_ylabel(f'{quantity2} of {label2}')
+
+def pp_plot(ax, data1, data2,
+            s=20, alpha=0.3,
+            label1=None, label2=None):
     combined = np.sort(np.concatenate([data1, data2]))[:, None]
 
     ax.plot([0, 1], [0, 1], 'k-', lw=0.5)
@@ -295,10 +303,13 @@ def pp_plot(ax, data1, data2, s=20, alpha=0.3):
                s=s, alpha=alpha)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
+    _add_prob_labels(ax, 'quantile', 'quantile', label1, label2)
     ax.set_title('P-P Plot')
 
 
-def qq_plot(ax, data1, data2, s=20, alpha=0.3):
+def qq_plot(ax, data1, data2,
+            s=20, alpha=0.3,
+            label1=None, label2=None):
     data1 = np.sort(data1)
     data2 = np.sort(data2)
     q1 = np.linspace(0, 1, len(data1))
@@ -308,7 +319,57 @@ def qq_plot(ax, data1, data2, s=20, alpha=0.3):
     qi2 = (q2 < q_combined).sum(axis=1)
 
     ax.scatter(data1[qi1], data2[qi2], s=s, alpha=alpha)
+    _add_prob_labels(ax, 'position', 'position', label1, label2)
     ax.set_title('Q-Q Plot')
+
+def plot_empirical_cdf(ax, data,
+                       color=None,
+                       label=None,
+                       xlim=None, transpose=False):
+    data = np.sort(data)
+    quantiles = np.linspace(0, 1, len(data))
+    if xlim is not None:
+        if xlim[0] < np.min(data):
+            data = np.concatenate([[xlim[0]], data])
+            quantiles = np.concatenate([[0], quantiles])
+        if xlim[1] > np.max(data):
+            data = np.concatenate([data, [xlim[1]]])
+            quantiles = np.concatenate([quantiles, [1]])
+    
+    if transpose:
+        ax.plot(quantiles, data,  '.-', c=color)
+        _add_prob_labels(ax, 'quantile', 'position', label, label)
+        ax.set_title('PPF')
+
+    else:
+        ax.plot(data, quantiles, '.-', c=color)
+        ax.set_ylabel('quantile')
+        ax.set_xlabel('position')
+        _add_prob_labels(ax, 'position', 'quantile', label, label)
+
+        ax.set_title('CDF')
+
+
+def qp_matrix(data1, data2,
+              label1=None, label2=None,
+               figsize=(8, 8)):
+    fig = plt.figure(figsize=figsize,
+                     constrained_layout=True)
+    gs = fig.add_gridspec(2, 2)
+    ax_cdf = fig.add_subplot(gs[1, 0])
+    ax_pp = fig.add_subplot(gs[1, 1], sharey=ax_cdf)
+    ax_qq = fig.add_subplot(gs[0, 0], sharex=ax_cdf)
+    ax_ppf = fig.add_subplot(gs[0, 1], sharex=ax_pp, sharey=ax_qq)
+
+    all_data = np.concatenate([data1, data2])
+    xlim = np.min(all_data), np.max(all_data)
+    plot_empirical_cdf(ax_cdf, data1, label=label1,
+                       xlim=xlim)
+
+    plot_empirical_cdf(ax_ppf, data2, label=label2,
+                       xlim=xlim, transpose=True)
+    qq_plot(ax_qq, data1, data2, label1=label1, label2=label2)
+    pp_plot(ax_pp, data2, data1, label1=label2, label2=label1)
 
 
 def pca_scatter_matrix(X,
