@@ -325,7 +325,9 @@ def qq_plot(ax, data1, data2,
 def plot_empirical_cdf(ax, data,
                        color=None,
                        label=None,
-                       xlim=None, transpose=False):
+                       show_labels=True,
+                       xlim=None,
+                       transpose=False):
     data = np.sort(data)
     quantiles = np.linspace(0, 1, len(data))
     if xlim is not None:
@@ -338,16 +340,15 @@ def plot_empirical_cdf(ax, data,
     
     if transpose:
         ax.plot(quantiles, data,  '.-', c=color)
-        _add_prob_labels(ax, 'quantile', 'position', label, label)
-        ax.set_title('PPF')
+        if show_labels:
+            _add_prob_labels(ax, 'quantile', 'position', label, label)
+        ax.set_title(f'PPF of {label}')
 
     else:
         ax.plot(data, quantiles, '.-', c=color)
-        ax.set_ylabel('quantile')
-        ax.set_xlabel('position')
-        _add_prob_labels(ax, 'position', 'quantile', label, label)
-
-        ax.set_title('CDF')
+        if show_labels:
+            _add_prob_labels(ax, 'position', 'quantile', label, label)
+        ax.set_title(f'CDF of {label}')
 
 
 def qp_matrix(data1, data2,
@@ -366,10 +367,11 @@ def qp_matrix(data1, data2,
     plot_empirical_cdf(ax_cdf, data1, label=label1,
                        xlim=xlim)
 
-    plot_empirical_cdf(ax_ppf, data2, label=label2,
+    plot_empirical_cdf(ax_ppf, data2, label=label2, show_labels=False,
                        xlim=xlim, transpose=True)
-    qq_plot(ax_qq, data1, data2, label1=label1, label2=label2)
-    pp_plot(ax_pp, data2, data1, label1=label2, label2=label1)
+    qq_plot(ax_qq, data1, data2, label1=None, label2=label2)
+    pp_plot(ax_pp, data2, data1, label1=label2, label2=None)
+    fig.suptitle(f'Q-P matrix of {label1} and {label2}')
 
 
 def pca_scatter_matrix(X,
