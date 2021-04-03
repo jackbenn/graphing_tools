@@ -10,7 +10,6 @@ from sklearn.decomposition import PCA
 TODO
   xlim instead of xmin/xmax?
   set colors
-  should line up better with integers by default
 '''
 
 
@@ -291,6 +290,7 @@ def _add_prob_labels(ax, quantity1, quantity2, label1, label2):
     if label2 is not None:
         ax.set_ylabel(f'{quantity2} of {label2}')
 
+
 def _convert_dists_to_data(data1, data2):
     if hasattr(data1, 'ppf') and hasattr(data2, 'ppf'):
         q = np.linspace(0, 1, 500)
@@ -309,10 +309,36 @@ def _convert_dists_to_data(data1, data2):
         data2 = np.sort(data2)
     return data1, data2
 
+
 def pp_plot(ax, data1, data2,
             s=20, alpha=0.3,
             label1=None, label2=None):
-    
+    """
+    Plot a P-P plot based on 2 sets of data and/or distributions
+    Parameters
+    ----------
+    ax : matplotlib axis
+        axis on which to plot
+
+    data1 : sequency of numbers, or scipy.stats distribution
+        data or distribution along the horizontal axis
+
+    data2 : sequency of numbers, or scipy.stats distribution
+        data or distribution along the vertical axis
+
+    s : number
+        size of markers
+
+    alpha : float between 0 and 1
+        opacity of markers
+
+    label1 : str
+        description of data1 to use on horizontal axis
+
+    label2 : str
+        description of data1 to use on vertical axis
+
+    """
     data1, data2 = _convert_dists_to_data(data1, data2)
 
     combined = np.sort(np.concatenate([data1, data2]))[:, None]
@@ -331,6 +357,31 @@ def pp_plot(ax, data1, data2,
 def qq_plot(ax, data1, data2,
             s=20, alpha=0.3,
             label1=None, label2=None):
+    """
+    Plot a Q-Q plot based on 2 sets of data and/or distributions
+    Parameters
+    ----------
+    ax : matplotlib axis
+        axis on which to plot
+
+    data1 : sequency of numbers, or scipy.stats distribution
+        data or distribution along the horizontal axis
+
+    data2 : sequency of numbers, or scipy.stats distribution
+        data or distribution along the vertical axis
+
+    s : number
+        size of markers
+
+    alpha : float between 0 and 1
+        opacity of markers
+
+    label1 : str
+        description of data1 to use on horizontal axis
+
+    label2 : str
+        description of data1 to use on vertical axis
+    """
 
     data1, data2 = _convert_dists_to_data(data1, data2)
 
@@ -344,6 +395,7 @@ def qq_plot(ax, data1, data2,
     ax.scatter(data1[qi1], data2[qi2], s=s, alpha=alpha)
     _add_prob_labels(ax, 'position', 'position', label1, label2)
     ax.set_title('Q-Q Plot')
+
 
 def plot_empirical_cdf(ax, data,
                        color=None,
@@ -360,7 +412,7 @@ def plot_empirical_cdf(ax, data,
         if xlim[1] > np.max(data):
             data = np.concatenate([data, [xlim[1]]])
             quantiles = np.concatenate([quantiles, [1]])
-    
+
     if transpose:
         ax.plot(quantiles, data,  '.-', c=color)
         if show_labels:
@@ -376,7 +428,7 @@ def plot_empirical_cdf(ax, data,
 
 def qp_matrix(data1, data2,
               label1=None, label2=None,
-               figsize=(8, 8)):
+              figsize=(8, 8)):
     fig = plt.figure(figsize=figsize,
                      constrained_layout=True)
     gs = fig.add_gridspec(2, 2)
@@ -433,8 +485,8 @@ def pca_scatter_matrix(X,
             ax.get_xaxis().set_ticks([])
             ax.get_yaxis().set_ticks([])
 
-            if i==n_components-1:
+            if i == n_components-1:
                 ax.set_xlabel(f'pc {j}')
-            if j==0:
+            if j == 0:
                 ax.set_ylabel(f'pc {i}')
     return fig
