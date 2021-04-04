@@ -4,6 +4,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import matplotlib
 from sklearn.metrics import confusion_matrix
+from sklearn.linear_model import LinearRegression
 from sklearn.decomposition import PCA
 
 '''
@@ -309,8 +310,28 @@ def _convert_dists_to_data(data1, data2):
         data2 = np.sort(data2)
     return data1, data2
 
+def _plot_fit_line(ax, data1, data2, line):
+    if line is None:
+        return
+    elif line == 'identity':
+        axdline(ax, 1, 0, lw=0.5)
+    elif line == 'regression':
+        model = LinearRegression()
+        model.fit(data1[:, None], data2)
+        xpts = data1.min(), data1.max()
+        print(xpts)
+        print(model.predict(np.reshape(xpts, (-1, 1))))
+        ax.plot(xpts,
+                model.predict(np.reshape(xpts, (-1, 1))),
+                lw=0.5)
+    elif line == 'pca':
+        model = PCA(1)
+        model.fit(np.stack([data1, data2]))
+    else:
+        raise ValueError("The line argument must be in (None, 'identity', regression', 'pca')")
 
 def pp_plot(ax, data1, data2,
+            line='identity',
             s=20, alpha=0.3,
             label1=None, label2=None):
     """
@@ -326,6 +347,13 @@ def pp_plot(ax, data1, data2,
     data2 : sequency of numbers, or scipy.stats distribution
         data or distribution along the vertical axis
 
+    line : str in [None, 'identity', 'regression', 'pca']
+        whether to plot a fit line, and what to plot
+        None : no line
+        'identity' : 45-degree line at x==y
+        'regression' : best fit line using linear regression
+        'pca' : line along principal component of data
+        
     s : number
         size of markers
 
@@ -343,10 +371,11 @@ def pp_plot(ax, data1, data2,
 
     combined = np.sort(np.concatenate([data1, data2]))[:, None]
 
-    ax.plot([0, 1], [0, 1], 'k-', lw=0.5)
     # would be better if it split the difference between < and <=
-    ax.scatter((data1 < combined).mean(axis=1),
-               (data2 < combined).mean(axis=1),
+    pts1 = (data1 < combined).mean(axis=1)
+    pts2 = (data2 < combined).mean(axis=1)
+    _plot_fit_line(ax, pts1, pts2, line)
+    ax.scatter(pts1, pts2,
                s=s, alpha=alpha)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -355,6 +384,7 @@ def pp_plot(ax, data1, data2,
 
 
 def qq_plot(ax, data1, data2,
+            line='regression',
             s=20, alpha=0.3,
             label1=None, label2=None):
     """
@@ -369,6 +399,13 @@ def qq_plot(ax, data1, data2,
 
     data2 : sequency of numbers, or scipy.stats distribution
         data or distribution along the vertical axis
+
+    line : str in [None, 'identity', 'regression', 'pca']
+        whether to plot a fit line, and what to plot
+        None : no line
+        'identity' : 45-degree line at x==y
+        'regression' : best fit line using linear regression
+        'pca' : line along principal component of data
 
     s : number
         size of markers
@@ -391,6 +428,8 @@ def qq_plot(ax, data1, data2,
     q_combined = np.sort(np.concatenate([q1, q2]))[:, None]
     qi1 = (q1 < q_combined).sum(axis=1)
     qi2 = (q2 < q_combined).sum(axis=1)
+
+    _plot_fit_line(ax, data1[qi1], data2[qi2], line)
 
     ax.scatter(data1[qi1], data2[qi2], s=s, alpha=alpha)
     _add_prob_labels(ax, 'position', 'position', label1, label2)
