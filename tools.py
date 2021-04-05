@@ -310,11 +310,15 @@ def _convert_dists_to_data(data1, data2):
         data2 = np.sort(data2)
     return data1, data2
 
+
 def _plot_fit_line(ax, data1, data2, line):
+    lineargs = {'lw': 0.5}
+
     if line is None:
         return
     elif line == 'identity':
-        axdline(ax, 1, 0, lw=0.5)
+        axdline(ax, 1, 0,
+                **lineargs)
     elif line == 'regression':
         model = LinearRegression()
         model.fit(data1[:, None], data2)
@@ -323,12 +327,22 @@ def _plot_fit_line(ax, data1, data2, line):
         print(model.predict(np.reshape(xpts, (-1, 1))))
         ax.plot(xpts,
                 model.predict(np.reshape(xpts, (-1, 1))),
-                lw=0.5)
-    elif line == 'pca':
+                **lineargs)
+    elif line == 'pc':
         model = PCA(1)
-        model.fit(np.stack([data1, data2]))
+        data = np.stack([data1, data2],
+                        axis=1)
+        means = data.mean(axis=0, keepdims=True)
+        data -= means
+        model.fit(data)
+        endpoints = np.stack([data[data[:, 0].argmin()],
+                              data[data[:, 0].argmax()]])
+        ax.plot(*((model.transform(endpoints) @
+                   model.components_) + means).T,
+                **lineargs)
     else:
-        raise ValueError("The line argument must be in (None, 'identity', regression', 'pca')")
+        raise ValueError("The line argument must be in (None, 'identity', regression', 'pc')")
+
 
 def pp_plot(ax, data1, data2,
             line='identity',
@@ -347,13 +361,13 @@ def pp_plot(ax, data1, data2,
     data2 : sequency of numbers, or scipy.stats distribution
         data or distribution along the vertical axis
 
-    line : str in [None, 'identity', 'regression', 'pca']
+    line : str in [None, 'identity', 'regression', 'pc']
         whether to plot a fit line, and what to plot
         None : no line
         'identity' : 45-degree line at x==y
         'regression' : best fit line using linear regression
-        'pca' : line along principal component of data
-        
+        'pc' : line along principal component of data
+
     s : number
         size of markers
 
@@ -400,12 +414,12 @@ def qq_plot(ax, data1, data2,
     data2 : sequency of numbers, or scipy.stats distribution
         data or distribution along the vertical axis
 
-    line : str in [None, 'identity', 'regression', 'pca']
+    line : str in [None, 'identity', 'regression', 'pc']
         whether to plot a fit line, and what to plot
         None : no line
         'identity' : 45-degree line at x==y
         'regression' : best fit line using linear regression
-        'pca' : line along principal component of data
+        'pc' : line along principal component of data
 
     s : number
         size of markers
