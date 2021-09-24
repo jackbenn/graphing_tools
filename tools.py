@@ -127,7 +127,7 @@ def multihist(x, y=None,
     ax.legend()
 
 
-def axdline(ax, slope, intercept, **kwargs):
+def axdline(ax, slope=None, intercept=None, x=None, y=None, **kwargs):
     """
     Add a diagonal line across the axis, similar to axhline and axvline.
     Parameters
@@ -138,10 +138,19 @@ def axdline(ax, slope, intercept, **kwargs):
     intercept : scalar
         y intercept in data coordinates of the diagonal line
 
+    x : list or array with 2 elements
+    y : list or array with 2 elements
+        the x and y coordinates or two points on the line. Only used
+        if slope or intercept are missing
+
     Returns
     -------
     line : :class:`~matplotlib.lines.Line2D`
     """
+
+    if slope is None or intercept is None:
+        slope = (y[1] - y[0])/(x[1] - x[0])
+        intercept = y[0] - x[0] * slope
 
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
