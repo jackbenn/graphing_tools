@@ -11,6 +11,8 @@ from sklearn.decomposition import PCA
 TODO
   xlim instead of xmin/xmax?
   set colors
+  remove axdline (since axline exists)
+      or maybe leave and fix to handle rays
 '''
 
 
@@ -256,11 +258,18 @@ def plot_confusion_matrix(ax,
                         horizontalalignment='center',
                         verticalalignment='center', color='white')
 
+def plot_discontinuous(ax, x, y):
+    """Plot a discontinuous function
+    (for now, a càdlàg functions, continuous on the right)"""
+    # note it's a bit tricky, since ideally we would plot a ray
+    pass
+
 
 def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     """
     Plot the CDF of discrete random variable.
     TODO:
+      generalize to other discontinuous functions
       get color automatically
       get background color rather than use white
       add other parameters for drawing (lw, size, alpha)
