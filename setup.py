@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 
 setuptools.setup(
-    name='toolbox',
-    version='0.0.1',
+    name='graphing_tools',
+    version='0.0.2',
     author='Jack Bennetto',
     author_email='jack@bennetto.com',
     description='Assorted graphing functions for data science',
