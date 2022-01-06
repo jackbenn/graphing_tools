@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -257,11 +258,31 @@ def plot_confusion_matrix(ax,
                         horizontalalignment='center',
                         verticalalignment='center', color='white')
 
-def plot_discontinuous(ax, x, y):
+def plot_discontinuous(ax, x, y, margin=1/5, color='k'):
     """Plot a discontinuous function
     (for now, a càdlàg functions, continuous on the right)"""
-    # note it's a bit tricky, since ideally we would plot a ray
-    pass
+    # note ideally we would plot a ray
+    
+    diff = x[-1] - x[0]
+
+    x.insert(0, x[0] - diff * margin)
+    x.append(x[-1] + diff * margin)
+    for i in range(len(x)-1):
+        if i > 0:
+            ax.scatter(x[[[i]]], y[[i]],
+                        s=100,
+                        facecolor='w',
+                        edgecolor=color,
+                        zorder=3)
+            ax.scatter(x[[[i+1]]], y[[i+1]],
+                        s=100,
+                        facecolor=color,
+                        edgecolor=color,
+                        zorder=3)
+        ax.plot([x[i], x[i+1]],
+                [cumulative_prob, cumulative_prob], color)
+
+ 
 
 
 def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
