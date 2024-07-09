@@ -6,14 +6,15 @@ import matplotlib
 from sklearn.metrics import confusion_matrix
 from sklearn.linear_model import LinearRegression
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
-'''
+"""
 TODO
   xlim instead of xmin/xmax?
   set colors
   remove axdline (since axline exists)
       or maybe leave and fix to handle rays
-'''
+"""
 
 
 def _find_aligned_bins(xmin, xmax, bins):
@@ -22,31 +23,40 @@ def _find_aligned_bins(xmin, xmax, bins):
 
     log_target_binsize = np.log10(target_binsize)
     base_unit = 10 ** np.floor(log_target_binsize)
-    trial_units = [base_unit,
-                   base_unit * 2,
-                   base_unit * 5,
-                   base_unit * 10]
+    trial_units = [base_unit, base_unit * 2, base_unit * 5, base_unit * 10]
     errors = []
     for trial_unit in trial_units:
         trial_min_per_unit = xmin // trial_unit  # round down to trial_unit
         trial_max_per_unit = xmax // trial_unit + (xmax % trial_unit != 0)  # round up
         trial_bins = trial_max_per_unit - trial_min_per_unit
-        errors.append(np.log(bins / trial_bins) ** 2)  # how far of we are in number of bins
+        errors.append(
+            np.log(bins / trial_bins) ** 2
+        )  # how far of we are in number of bins
 
     unit = trial_units[np.argmin(errors)]
-    return unit, np.arange(xmin // unit,
-                           xmax // unit + (xmax % unit != 0) + 1,
-                           1) * unit
+    return (
+        unit,
+        np.arange(xmin // unit, xmax // unit + (xmax % unit != 0) + 1, 1) * unit,
+    )
 
 
-def multihist(x, y=None,
-              bins=None, binsize=None,
-              align=False,
-              xmin=None, xmax=None, ymax=None,
-              kde=None,
-              density=True, alpha=0.2, figsize=(12, 8), title=None,
-              ax=None):
-    '''
+def multihist(
+    x,
+    y=None,
+    bins=None,
+    binsize=None,
+    align=False,
+    xmin=None,
+    xmax=None,
+    ymax=None,
+    kde=None,
+    density=True,
+    alpha=0.2,
+    figsize=(12, 8),
+    title=None,
+    ax=None,
+):
+    """
     INPUT:
     x:      numpy array; point of a distribution
     y:      numpy array of the same length; will plot histogram
@@ -67,13 +77,13 @@ def multihist(x, y=None,
     figsize:tuple; width and height of figure; pass to matplotlib
     title:  str; title of plot
     ax:     axis on which to plot histograms
-    '''
+    """
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
     if title is not None:
         ax.set_title(title)
     if y is None:
-        y = np.concatenate([[i]*len(subx) for i, subx in enumerate(x)])
+        y = np.concatenate([[i] * len(subx) for i, subx in enumerate(x)])
         x = np.concatenate(x)
     if xmin is None and xmax is None:
         xc = x
@@ -90,16 +100,12 @@ def multihist(x, y=None,
         if bins is None:
             bins = 20
         if align:
-            binsize, binarray = _find_aligned_bins(xbinmin,
-                                                   xbinmax,
-                                                   bins)
+            binsize, binarray = _find_aligned_bins(xbinmin, xbinmax, bins)
         else:
-            binsize = (xc.max() - xc.min())/bins
+            binsize = (xc.max() - xc.min()) / bins
             binarray = np.linspace(xbinmin, xbinmax, bins + 1)
     else:
-        binarray = np.arange(xbinmin,
-                             np.nextafter(xbinmax, xbinmax+1),
-                             binsize)
+        binarray = np.arange(xbinmin, np.nextafter(xbinmax, xbinmax + 1), binsize)
 
     if kde:
         xvals = np.linspace(xc.min(), xc.max(), 100)
@@ -107,17 +113,19 @@ def multihist(x, y=None,
 
     # We need to get the default color cycle to get the same color
     # for the hist and kde line.
-    props = plt.rcParams['axes.prop_cycle']
+    props = plt.rcParams["axes.prop_cycle"]
 
     for yval, prop in zip(np.unique(y), props):
-        color = prop['color']
+        color = prop["color"]
 
-        h = ax.hist(list(xc[y == yval]),
-                    alpha=alpha,
-                    bins=binarray,
-                    density=density,
-                    label=str(yval),
-                    color=color)
+        h = ax.hist(
+            list(xc[y == yval]),
+            alpha=alpha,
+            bins=binarray,
+            density=density,
+            label=str(yval),
+            color=color,
+        )
         if kde:
             kde_func = stats.gaussian_kde(xc[y == yval])
             if not density:
@@ -151,30 +159,31 @@ def axdline(ax, slope=None, intercept=None, x=None, y=None, **kwargs):
     """
 
     if slope is None or intercept is None:
-        slope = (y[1] - y[0])/(x[1] - x[0])
+        slope = (y[1] - y[0]) / (x[1] - x[0])
         intercept = y[0] - x[0] * slope
 
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
-    line = ax.plot(xlim,
-                   (xlim[0]*slope + intercept,
-                    xlim[1]*slope + intercept),
-                   **kwargs)
+    line = ax.plot(
+        xlim, (xlim[0] * slope + intercept, xlim[1] * slope + intercept), **kwargs
+    )
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     return line[0]
 
 
-def plot_confusion_matrix(ax,
-                          y_true,
-                          y_pred,
-                          color='blue',
-                          counts=False,
-                          grid=False,
-                          area=True,
-                          transpose=True,
-                          shape='square',
-                          normalization="maximum"):
+def plot_confusion_matrix(
+    ax,
+    y_true,
+    y_pred,
+    color="blue",
+    counts=False,
+    grid=False,
+    area=True,
+    transpose=True,
+    shape="square",
+    normalization="maximum",
+):
     """
     Parameters
     ----------
@@ -207,15 +216,16 @@ def plot_confusion_matrix(ax,
             so the values represent the recalls (along rows if transpose==True)
     """
     cnts = confusion_matrix(y_true, y_pred).astype(float)
-    if normalization == 'maximum':
+    if normalization == "maximum":
         cm = cnts / cnts.max()
-    elif normalization == 'prediction' or normalization == 'precision':
+    elif normalization == "prediction" or normalization == "precision":
         cm = cnts / cnts.sum(axis=0, keepdims=True)
-    elif normalization == 'true' or normalization == 'recall':
+    elif normalization == "true" or normalization == "recall":
         cm = cnts / cnts.sum(axis=1, keepdims=True)
     else:
-        raise ValueError("`normalization` should be one of: " +
-                         "`maximum`, `true`, `prediction`")
+        raise ValueError(
+            "`normalization` should be one of: " + "`maximum`, `true`, `prediction`"
+        )
     n = cm.shape[0]
 
     if transpose:
@@ -227,15 +237,15 @@ def plot_confusion_matrix(ax,
     for axis in [ax.xaxis, ax.yaxis]:
         axis.set_ticks(tics + 0.5, minor=True)
         axis.set(ticks=tics, ticklabels=labels)
-    ax.tick_params(axis='both', which='major', length=0)
+    ax.tick_params(axis="both", which="major", length=0)
 
-    ax.set_xlim(-0.5, n-0.5)
-    ax.set_ylim(-0.5, n-0.5)
+    ax.set_xlim(-0.5, n - 0.5)
+    ax.set_ylim(-0.5, n - 0.5)
 
     ax.invert_yaxis()
-    ax.grid(grid, which='minor')
+    ax.grid(grid, which="minor")
 
-    labels = ['true', 'prediction']
+    labels = ["true", "prediction"]
     if transpose:
         labels.reverse()
     ax.set_xlabel(labels[0])
@@ -247,45 +257,50 @@ def plot_confusion_matrix(ax,
     for i in range(n):
         for j in range(n):
             size = cm[i, j]
-            if shape == 'square':
-                square = matplotlib.patches.Rectangle((i - size/2, j - size/2),
-                                                      size, size, color=color)
-            elif shape == 'circle':
-                square = matplotlib.patches.Circle((i, j), size/2, color=color)
+            if shape == "square":
+                square = matplotlib.patches.Rectangle(
+                    (i - size / 2, j - size / 2), size, size, color=color
+                )
+            elif shape == "circle":
+                square = matplotlib.patches.Circle((i, j), size / 2, color=color)
             ax.add_patch(square)
             if counts:
-                ax.text(i, j, str(int(cnts[i, j])),
-                        horizontalalignment='center',
-                        verticalalignment='center', color='white')
+                ax.text(
+                    i,
+                    j,
+                    str(int(cnts[i, j])),
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    color="white",
+                )
 
-def plot_discontinuous(ax, x, y, margin=1/5, color='k'):
+
+def plot_discontinuous(ax, x, y, margin=1 / 5, color="k"):
     """Plot a discontinuous function
     (for now, a càdlàg functions, continuous on the right)"""
     # note ideally we would plot a ray
-    
+
     diff = x[-1] - x[0]
 
     x.insert(0, x[0] - diff * margin)
     x.append(x[-1] + diff * margin)
-    for i in range(len(x)-1):
+    for i in range(len(x) - 1):
         if i > 0:
-            ax.scatter(x[[[i]]], y[[i]],
-                        s=100,
-                        facecolor='w',
-                        edgecolor=color,
-                        zorder=3)
-            ax.scatter(x[[[i+1]]], y[[i+1]],
-                        s=100,
-                        facecolor=color,
-                        edgecolor=color,
-                        zorder=3)
-        ax.plot([x[i], x[i+1]],
-                [cumulative_prob, cumulative_prob], color)
-
- 
+            ax.scatter(
+                x[[[i]]], y[[i]], s=100, facecolor="w", edgecolor=color, zorder=3
+            )
+            ax.scatter(
+                x[[[i + 1]]],
+                y[[i + 1]],
+                s=100,
+                facecolor=color,
+                edgecolor=color,
+                zorder=3,
+            )
+        ax.plot([x[i], x[i + 1]], [cumulative_prob, cumulative_prob], color)
 
 
-def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
+def plot_discrete_cdf(ax, pmf, margin=1 / 5, color="k"):
     """
     Plot the CDF of discrete random variable.
     TODO:
@@ -303,43 +318,46 @@ def plot_discrete_cdf(ax, pmf, margin=1/5, color='k'):
     keys.append(keys[-1] + diff * margin)
 
     cumulative_prob = 0
-    for i in range(len(keys)-1):
+    for i in range(len(keys) - 1):
         if i > 0:
-            ax.scatter([keys[i]],
-                       [cumulative_prob],
-                       s=100,
-                       facecolor='w',
-                       edgecolor=color,
-                       zorder=3)
+            ax.scatter(
+                [keys[i]],
+                [cumulative_prob],
+                s=100,
+                facecolor="w",
+                edgecolor=color,
+                zorder=3,
+            )
             cumulative_prob += pmf[keys[i]]
-            ax.scatter([keys[i]],
-                       [cumulative_prob],
-                       s=100,
-                       facecolor=color,
-                       edgecolor=color,
-                       zorder=3)
-        ax.plot([keys[i], keys[i+1]],
-                [cumulative_prob, cumulative_prob], color)
-    ax.set_ylabel('CDF')
+            ax.scatter(
+                [keys[i]],
+                [cumulative_prob],
+                s=100,
+                facecolor=color,
+                edgecolor=color,
+                zorder=3,
+            )
+        ax.plot([keys[i], keys[i + 1]], [cumulative_prob, cumulative_prob], color)
+    ax.set_ylabel("CDF")
 
 
 def _add_prob_labels(ax, quantity1, quantity2, label1, label2):
     if label1 is not None:
-        ax.set_xlabel(f'{quantity1} of {label1}')
+        ax.set_xlabel(f"{quantity1} of {label1}")
     if label2 is not None:
-        ax.set_ylabel(f'{quantity2} of {label2}')
+        ax.set_ylabel(f"{quantity2} of {label2}")
 
 
 def _convert_dists_to_data(data1, data2):
-    if hasattr(data1, 'ppf') and hasattr(data2, 'ppf'):
+    if hasattr(data1, "ppf") and hasattr(data2, "ppf"):
         q = np.linspace(0, 1, 500)
         data1 = data1.ppf(q)
         data2 = data2.ppf(q)
-    elif hasattr(data1, 'ppf'):
+    elif hasattr(data1, "ppf"):
         q = np.linspace(0, 1, len(data2))
         data1 = data1.ppf(q)
         data2 = np.sort(data2)
-    elif hasattr(data2, 'ppf'):
+    elif hasattr(data2, "ppf"):
         q = np.linspace(0, 1, len(data1))
         data1 = np.sort(data1)
         data2 = data2.ppf(q)
@@ -350,42 +368,38 @@ def _convert_dists_to_data(data1, data2):
 
 
 def _plot_fit_line(ax, data1, data2, line):
-    lineargs = {'lw': 0.5}
+    lineargs = {"lw": 0.5}
 
     if line is None:
         return
-    elif line == 'identity':
-        axdline(ax, 1, 0,
-                **lineargs)
-    elif line == 'regression':
+    elif line == "identity":
+        axdline(ax, 1, 0, **lineargs)
+    elif line == "regression":
         model = LinearRegression()
         model.fit(data1[:, None], data2)
         xpts = data1.min(), data1.max()
         print(xpts)
         print(model.predict(np.reshape(xpts, (-1, 1))))
-        ax.plot(xpts,
-                model.predict(np.reshape(xpts, (-1, 1))),
-                **lineargs)
-    elif line == 'pc':
+        ax.plot(xpts, model.predict(np.reshape(xpts, (-1, 1))), **lineargs)
+    elif line == "pc":
         model = PCA(1)
-        data = np.stack([data1, data2],
-                        axis=1)
+        data = np.stack([data1, data2], axis=1)
         means = data.mean(axis=0, keepdims=True)
         data -= means
         model.fit(data)
-        endpoints = np.stack([data[data[:, 0].argmin()],
-                              data[data[:, 0].argmax()]])
-        ax.plot(*((model.transform(endpoints) @
-                   model.components_) + means).T,
-                **lineargs)
+        endpoints = np.stack([data[data[:, 0].argmin()], data[data[:, 0].argmax()]])
+        ax.plot(
+            *((model.transform(endpoints) @ model.components_) + means).T, **lineargs
+        )
     else:
-        raise ValueError("The line argument must be in (None, 'identity', regression', 'pc')")
+        raise ValueError(
+            "The line argument must be in (None, 'identity', regression', 'pc')"
+        )
 
 
-def pp_plot(ax, data1, data2,
-            line='identity',
-            s=20, alpha=0.3,
-            label1=None, label2=None):
+def pp_plot(
+    ax, data1, data2, line="identity", s=20, alpha=0.3, label1=None, label2=None
+):
     """
     Plot a P-P plot based on 2 sets of data and/or distributions
     Parameters
@@ -427,18 +441,16 @@ def pp_plot(ax, data1, data2,
     pts1 = (data1 < combined).mean(axis=1)
     pts2 = (data2 < combined).mean(axis=1)
     _plot_fit_line(ax, pts1, pts2, line)
-    ax.scatter(pts1, pts2,
-               s=s, alpha=alpha)
+    ax.scatter(pts1, pts2, s=s, alpha=alpha)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    _add_prob_labels(ax, 'quantile', 'quantile', label1, label2)
-    ax.set_title('P-P Plot')
+    _add_prob_labels(ax, "quantile", "quantile", label1, label2)
+    ax.set_title("P-P Plot")
 
 
-def qq_plot(ax, data1, data2,
-            line='regression',
-            s=20, alpha=0.3,
-            label1=None, label2=None):
+def qq_plot(
+    ax, data1, data2, line="regression", s=20, alpha=0.3, label1=None, label2=None
+):
     """
     Plot a Q-Q plot based on 2 sets of data and/or distributions
     Parameters
@@ -484,16 +496,13 @@ def qq_plot(ax, data1, data2,
     _plot_fit_line(ax, data1[qi1], data2[qi2], line)
 
     ax.scatter(data1[qi1], data2[qi2], s=s, alpha=alpha)
-    _add_prob_labels(ax, 'position', 'position', label1, label2)
-    ax.set_title('Q-Q Plot')
+    _add_prob_labels(ax, "position", "position", label1, label2)
+    ax.set_title("Q-Q Plot")
 
 
-def plot_empirical_cdf(ax, data,
-                       color=None,
-                       label=None,
-                       show_labels=True,
-                       xlim=None,
-                       transpose=False):
+def plot_empirical_cdf(
+    ax, data, color=None, label=None, show_labels=True, xlim=None, transpose=False
+):
     data = np.sort(data)
     quantiles = np.linspace(0, 1, len(data))
     if xlim is not None:
@@ -505,23 +514,20 @@ def plot_empirical_cdf(ax, data,
             quantiles = np.concatenate([quantiles, [1]])
 
     if transpose:
-        ax.plot(quantiles, data,  '.-', c=color)
+        ax.plot(quantiles, data, ".-", c=color)
         if show_labels:
-            _add_prob_labels(ax, 'quantile', 'position', label, label)
-        ax.set_title(f'PPF of {label}')
+            _add_prob_labels(ax, "quantile", "position", label, label)
+        ax.set_title(f"PPF of {label}")
 
     else:
-        ax.plot(data, quantiles, '.-', c=color)
+        ax.plot(data, quantiles, ".-", c=color)
         if show_labels:
-            _add_prob_labels(ax, 'position', 'quantile', label, label)
-        ax.set_title(f'CDF of {label}')
+            _add_prob_labels(ax, "position", "quantile", label, label)
+        ax.set_title(f"CDF of {label}")
 
 
-def qp_matrix(data1, data2,
-              label1=None, label2=None,
-              figsize=(8, 8)):
-    fig = plt.figure(figsize=figsize,
-                     constrained_layout=True)
+def qp_matrix(data1, data2, label1=None, label2=None, figsize=(8, 8)):
+    fig = plt.figure(figsize=figsize, constrained_layout=True)
     gs = fig.add_gridspec(2, 2)
     ax_cdf = fig.add_subplot(gs[1, 0])
     ax_pp = fig.add_subplot(gs[1, 1], sharey=ax_cdf)
@@ -530,24 +536,33 @@ def qp_matrix(data1, data2,
 
     all_data = np.concatenate([data1, data2])
     xlim = np.min(all_data), np.max(all_data)
-    plot_empirical_cdf(ax_cdf, data1, label=label1,
-                       xlim=xlim)
+    plot_empirical_cdf(ax_cdf, data1, label=label1, xlim=xlim)
 
-    plot_empirical_cdf(ax_ppf, data2, label=label2, show_labels=False,
-                       xlim=xlim, transpose=True)
+    plot_empirical_cdf(
+        ax_ppf, data2, label=label2, show_labels=False, xlim=xlim, transpose=True
+    )
     qq_plot(ax_qq, data1, data2, label1=None, label2=label2)
     pp_plot(ax_pp, data2, data1, label1=label2, label2=None)
-    fig.suptitle(f'Q-P matrix of {label1} and {label2}')
+    fig.suptitle(f"Q-P matrix of {label1} and {label2}")
 
 
-def pca_scatter_matrix(X,
-                       n_components=3,
-                       color=None,
-                       alpha=1.0,
-                       s=10,
-                       figsize=(10, 5)):
+def pca_scatter_matrix(
+    X, n_components=3, color=None, alpha=1.0, s=10, figsize=(10, 5), standardize=False
+):
+    """
+    Plot a multi-dimentional dataset along various dimensions
+
+    TODO:
+        Handle layout of subgraphs better
+         * by default spicify a width
+        Support for a path of points
+         * annotation to highlight and label every nth point
+    """
     if color is None:
         color = np.zeros(len(X))
+
+    if standardize:
+        X = StandardScaler().fit_transform(X)
 
     pca = PCA(n_components=n_components)
     pca.fit(X)
@@ -556,28 +571,26 @@ def pca_scatter_matrix(X,
     diffs = new_X.min(axis=0) - new_X.max(axis=0)
 
     fig = plt.figure(figsize=figsize)
-    gs = matplotlib.gridspec.GridSpec(nrows=n_components-1,
-                                      ncols=n_components-1,
-                                      width_ratios=diffs[:-1],
-                                      height_ratios=diffs[1:])
+    gs = matplotlib.gridspec.GridSpec(
+        nrows=n_components - 1,
+        ncols=n_components - 1,
+        width_ratios=diffs[:-1],
+        height_ratios=diffs[1:],
+    )
 
     for i in range(1, n_components):
-        for j in range(0, n_components-1):
-            ax = plt.subplot(gs[i-1, j])
+        for j in range(0, n_components - 1):
+            ax = plt.subplot(gs[i - 1, j])
             ax.set_aspect(1)
             if j < i:
-                ax.scatter(new_X[:, j],
-                           new_X[:, i],
-                           c=color,
-                           alpha=alpha,
-                           s=s)
+                ax.scatter(new_X[:, j], new_X[:, i], c=color, alpha=alpha, s=s)
             else:
                 ax.axis(False)
             ax.get_xaxis().set_ticks([])
             ax.get_yaxis().set_ticks([])
 
-            if i == n_components-1:
-                ax.set_xlabel(f'pc {j}')
+            if i == n_components - 1:
+                ax.set_xlabel(f"pc {j}")
             if j == 0:
-                ax.set_ylabel(f'pc {i}')
+                ax.set_ylabel(f"pc {i}")
     return fig
